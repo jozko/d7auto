@@ -1,0 +1,17 @@
+---
+- name: Manage the Drupal/CiviCRM hosts
+  hosts: all
+  user: ubuntu
+  tags: ['install']
+  become: False
+  vars_files:
+    - vars/site.local.yml
+
+  roles:
+    - common-host
+    - php5
+    - percona
+    - nginx
+    - drupal
+    - civicrm
+    - { role: certbot, when: site.ssl }

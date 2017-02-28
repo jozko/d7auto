@@ -1,0 +1,23 @@
+- name: install php5 packages for running Drupal/CiviCRM
+  apt: name={{ item }} state=latest update_cache=yes
+  with_items:
+   - php5-cli 
+   - php5-fpm 
+   - php5-gd 
+   - php5-json 
+   - php5-mysql
+   - php5-gd
+   - php5-curl
+   - php5-readline
+  become: yes
+
+- name: upload customized www pool configuration
+  template:
+      src: pool.j2
+      dest: /etc/php5/fpm/pool.d/www.conf
+      owner: root
+      group: root
+      mode: 0644
+  become: yes
+  notify: restart php5-fpm
+

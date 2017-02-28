@@ -1,0 +1,30 @@
+---
+- name: download Percona repo deb
+  get_url:
+    url: "{{percona.repo_deb_url}}"
+    dest: "/tmp/{{ percona.repo_deb_url.split('/')[-1] }}"
+
+- name: install Percona repo from deb
+  apt: deb="/tmp/{{ percona.repo_deb_url.split('/')[-1] }}"
+  become: yes
+
+- name: install Percona database
+  apt: name={{ item }} state=latest update_cache=yes
+  with_items:
+    - percona-server-server-{{percona.version}}
+    - percona-server-common-{{percona.version}}
+    - percona-server-client-{{percona.version}}
+  environment:
+    DEBIAN_FRONTEND: "{{ percona.debian_frontend }}"
+  become: yes
+  notify: enable mysql
+
+- name: install Python Mysql module so we can manage DB using Ansible
+  apt: name=python-mysqldb state=latest update_cache=yes
+  become: yes
+
+- name: make sure Mysql is started to avoid any problems later on
+  service:
+    name: mysql
+    state: started
+  become: yes

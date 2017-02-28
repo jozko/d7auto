@@ -1,0 +1,19 @@
+---
+- name: drush cache clear
+  shell: drush cache-clear drush
+  args:
+      chdir: "{{drupal.project_root}}/{{drupal.project_domain}}"
+      executable: /bin/bash
+
+- name: fix civicrm ownership
+  shell: chown "{{ansible_user_id}}":"{{drupal.fpm_user}}" -R "{{drupal.project_root}}"/"{{drupal.project_domain}}"/sites/default/files/civicrm
+  become: yes
+
+- name: fix civicrm directory permissions
+  shell: find  "{{drupal.project_root}}/{{drupal.project_domain}}/sites/default/files/civicrm" -type d -exec chmod 0775 {} \;
+  become: yes
+
+- name: fix civicrm files permissions
+  shell: find  "{{drupal.project_root}}/{{drupal.project_domain}}/sites/default/files/civicrm" -type f -exec chmod 0664 {} \;
+  become: yes
+

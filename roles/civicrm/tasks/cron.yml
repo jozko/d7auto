@@ -1,0 +1,10 @@
+---
+- name: configure cron job for civicrm
+  cron:
+    user: 'www-data'
+    cron_file: '/etc/crontab'
+    name: "default civicrm cron job"
+    minute: "*/5"
+    hour: "*"
+    job: "/usr/local/bin/drush --quiet -r {{drupal.project_root}}/{{drupal.project_domain}} -l http://{{drupal.project_domain}} civicrm-api -u {{drupal.account_name}} job.execute"
+  become: yes

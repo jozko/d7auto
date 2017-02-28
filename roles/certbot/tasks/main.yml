@@ -1,0 +1,63 @@
+---
+- name: install packages required by certbot
+  apt: name={{ item }} state=latest update_cache=yes
+  with_items:
+    - build-essential
+    - libpython2.7-dev
+    - libssl-dev
+    - libpython-dev
+    - python-setuptools
+    - python2.7-dev
+    - openssl
+    - augeas-lenses
+    - libaugeas0
+    - libffi-dev
+    - python-dev
+    - python-virtualenv
+    - python-pip
+  become: yes
+
+- name: install certbot
+  get_url:
+      url: "{{certbot.download_url}}"
+      dest: "/usr/local/bin/certbot-auto"
+      mode: 0755
+  become: yes
+
+- name: get and install certificates - production
+  shell: certbot-auto certonly -n --no-self-upgrade --agree-tos --email "{{certbot.cert_email}}" --webroot -w "{{site.rootdir}}/{{site.domain}}" -d "{{certbot.cert_domains}}"
+  args:
+      creates: "/etc/letsencrypt/live/{{site.domain}}/fullchain.pem"
+      executable: /bin/bash
+  become: yes
+  when: certbot.cert_type == 'production'
+
+- name: get and install certificates - staging
+  shell: certbot-auto certonly -n --no-self-upgrade --test-cert --agree-tos --email "{{certbot.cert_email}}" --webroot -w "{{site.rootdir}}/{{site.domain}}" -d "{{certbot.cert_domains}}"
+  args:
+      creates: "/etc/letsencrypt/live/{{site.domain}}/fullchain.pem"
+      executable: /bin/bash
+  become: yes
+  when: certbot.cert_type == 'staging'
+
+- name: upload the correct site nginx configuration
+  template: src=drupal_nginx_https.j2 dest="/etc/nginx/conf.d/ssl_{{drupal.project_domain}}.conf" owner=root group=root mode=0644
+  when: site.ssl
+  become: yes
+  notify: reload nginx
+
+- name: create certbot cron entry to autoupdate the certs
+  cron:
+    name: "autoupdate ssl certs, check 2x per day"
+    minute: "21"
+    hour: "9,21"
+    job: "/usr/local/bin/certbot-auto renew --quiet --no-self-upgrade"
+  when: certbot.cert_type == 'production'
+  become: yes
+
+- name: restart nginx to enable ssl
+  service:
+      name: nginx
+      state: restarted
+  become: yes
+

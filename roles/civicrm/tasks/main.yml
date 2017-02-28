@@ -1,0 +1,67 @@
+---
+- name: create civicrm database
+  mysql_db:
+      name: "{{civicrm.db_name}}"
+  become: yes
+
+- name: create civicrm db user
+  mysql_user:
+      name: "{{civicrm.db_user}}"
+      password: "{{civicrm.db_pass}}"
+      priv: '{{civicrm.db_name}}.*:ALL'
+      state: present
+  become: yes
+
+- name: grant drupal db user select on civicrm DB
+  mysql_user:
+      name: "{{drupal.db_user}}"
+      append_privs: true 
+      priv: '{{civicrm.db_name}}.*:SELECT'
+      state: present
+  become: yes
+
+- name: download and unarchive civicrm installation
+  unarchive:
+    src: "{{civicrm.download_url}}"
+    dest: "{{drupal.project_root}}/{{drupal.project_domain}}/sites/all/modules"
+    remote_src: True
+    creates: "{{drupal.project_root}}/{{drupal.project_domain}}/sites/all/modules/civicrm"
+
+- name: symlink civicrm drush integration to ~/.drush
+  file:
+      src: "{{drupal.project_root}}/{{drupal.project_domain}}/sites/all/modules/civicrm/drupal/drush/civicrm.drush.inc"
+      dest: "{{ansible_user_dir}}/.drush/civicrm.drush.inc"
+      state: link
+
+- name: clear drush cache
+  shell: drush cache-clear drush
+  args:
+      chdir: "{{drupal.project_root}}/{{drupal.project_domain}}"
+      executable: /bin/bash
+
+- name: drush install civicrm
+  shell: drush civicrm-install --dbname="{{civicrm.db_name}}" --dbpass="{{civicrm.db_pass}}" --dbuser="{{civicrm.db_user}}" --destination='sites/all/modules' --site_url="{{civicrm.site_url}}" --yes
+  args:
+      chdir: "{{drupal.project_root}}/{{drupal.project_domain}}"
+      creates: "{{drupal.project_root}}/{{drupal.project_domain}}/sites/default/civicrm.settings.php"
+      executable: /bin/bash
+
+- name: enable civicrm modules
+  shell: drush pm-enable "{{ item }}" --yes && touch "{{drupal.project_root}}/{{drupal.project_domain}}/sites/default/lock/{{item}}.lock"
+  with_items: "{{civicrm.modules_enable}}"
+  args:
+    chdir: "{{drupal.project_root}}/{{drupal.project_domain}}"
+    creates: "{{drupal.project_root}}/{{drupal.project_domain}}/sites/default/lock/{{item}}.lock"
+    executable: /bin/bash
+
+- name: create a new custom_ext directory as per https://wiki.civicrm.org/confluence/display/CRMDOC/Extensions#Extensions-Drupal
+  file:
+      path: "{{drupal.project_root}}/{{drupal.project_domain}}/sites/default/custom_ext"
+      state: directory
+      owner: "{{ansible_user_id}}"
+      group: "{{drupal.fpm_user}}"
+      mode: 0775
+  become: yes
+
+- include: file_permissions.yml
+- include: cron.yml

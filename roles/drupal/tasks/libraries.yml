@@ -1,0 +1,12 @@
+---
+- name: check if we have BaM downloaded
+  stat:
+      path: '{{drupal.project_root}}/{{drupal.project_domain}}/sites/all/modules/backup_migrate'
+  register: bam
+
+- name: upload S3.php library that is used with BaM module
+  template:
+      src: 'S3.php'
+      dest: '{{drupal.project_root}}/{{drupal.project_domain}}/sites/all/modules/backup_migrate/includes/S3.php'
+      mode: '644'
+  when: bam.stat.isdir is defined and bam.stat.isdir

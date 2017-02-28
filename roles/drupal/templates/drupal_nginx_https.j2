@@ -1,0 +1,17 @@
+# {{ansible_managed}}
+
+server {
+    listen 80;
+    server_name {{site.domain}} www.{{site.domain}};
+    root {{site.rootdir}}/{{site.domain}};
+
+    # Allow "Well-Known URIs" as per RFC 5785
+    location ~* ^/.well-known/ {
+        allow all;
+    }
+
+   location / {
+   return 301 https://{{site.domain}}$request_uri;
+   }
+
+}

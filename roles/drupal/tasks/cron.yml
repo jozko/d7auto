@@ -1,0 +1,10 @@
+---
+- name: configure cron job for drupal
+  cron:
+    user: 'www-data'
+    cron_file: '/etc/crontab'
+    name: "default drupal core-cron job"
+    minute: "*/5"
+    hour: "*"
+    job: "/usr/local/bin/drush --quiet -r {{drupal.project_root}}/{{drupal.project_domain}} -l http://{{drupal.project_domain}} core-cron --quiet"
+  become: yes

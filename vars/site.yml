@@ -1,0 +1,54 @@
+site:
+    ssl: False
+    domain: 'domain.tld'
+    rootdir: '/srv/projects'
+    email: 'admin@domain.tld'
+
+percona:
+    repo_deb_url: 'https://repo.percona.com/apt/percona-release_0.1-4.trusty_all.deb'
+    version: 5.7
+    debian_frontend: 'noninteractive'
+
+drupal:
+    drush_url: 'https://s3.amazonaws.com/files.drush.org/drush.phar'
+    drupal_version: 'drupal-7'
+    project_root: '{{site.rootdir}}'
+    project_domain: '{{site.domain}}'
+    private_dir: '{{site.rootdir}}/{{site.domain}}/sites/default/files/private'
+    provision_file: '_ansible.lock'
+    db_name: ''
+    db_pass: ''
+    db_user: ''
+    account_name: ''
+    account_pass: ''
+    account_email: '{{site.email}}'
+    fpm_user: 'www-data'
+    modules_download:
+        - backup_migrate
+        - ctools
+        - views
+    modules_install:
+        - backup_migrate
+        - ctools
+        - views
+        - views_ui
+
+civicrm:
+    download_url: 'https://download.civicrm.org/civicrm-4.7.16-drupal.tar.gz'
+    site_url: '{{site.domain}}'
+    db_name: ''
+    db_pass: ''
+    db_user: ''
+    modules_enable:
+        - civicrm_contact_ref
+        - civicrm_engage
+        - civicrm_group_roles
+        - civicrm_member_roles
+        - civicrmtheme
+
+certbot:
+    download_url: 'https://dl.eff.org/certbot-auto'
+    cert_type: 'staging'
+    cert_domains: '{{site.domain}},www.{{site.domain}}'
+    cert_email: '{{drupal.account_email}}'
+    webroot: '{{drupal.project_root}}/{{drupal.project_domain}}'

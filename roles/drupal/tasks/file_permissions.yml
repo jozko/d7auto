@@ -1,0 +1,11 @@
+- name: fix drupal files ownership
+  shell: chown "{{ansible_user_id}}":"{{drupal.fpm_user}}" -R "{{drupal.project_root}}"/"{{drupal.project_domain}}"/sites/default/files
+  become: yes
+
+- name: fix drupal directory permissions
+  shell: find  "{{drupal.project_root}}/{{drupal.project_domain}}/sites/default/files" -type d -exec chmod 0775 {} \;
+  become: yes
+
+- name: fix drupal files permissions
+  shell: find  "{{drupal.project_root}}/{{drupal.project_domain}}/sites/default/files" -type f -exec chmod 0664 {} \;
+  become: yes

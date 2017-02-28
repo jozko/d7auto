@@ -1,0 +1,11 @@
+---
+- name: fix default site perms
+  file:
+      path: "{{drupal.project_root}}/{{drupal.project_domain}}/sites/default" 
+      mode: 0775
+
+- name: restart nginx
+  service: 
+      name: nginx 
+      enabled: yes 
+      state: restarted 

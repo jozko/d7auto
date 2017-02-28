@@ -1,0 +1,21 @@
+---
+- name: create lock directory so we don't "enable" drupal/civicrm modules on every run
+  file:
+      path: "{{drupal.project_root}}/{{drupal.project_domain}}/sites/default/lock"
+      state: directory
+
+- name: download drupal modules using drush
+  shell: drush dl "{{item}}" --yes
+  with_items: "{{drupal.modules_download}}"
+  args:
+      chdir: "{{drupal.project_root}}/{{drupal.project_domain}}"
+      creates: "{{drupal.project_root}}/{{drupal.project_domain}}/sites/all/modules/{{ item }}"
+      executable: /bin/bash
+
+- name: install drupal modules using drush
+  shell: drush pm-enable "{{item}}" --yes && touch "{{drupal.project_root}}/{{drupal.project_domain}}/sites/default/lock/{{item}}.lock"
+  with_items: "{{drupal.modules_install}}"
+  args:
+      chdir: "{{drupal.project_root}}/{{drupal.project_domain}}"
+      creates: "{{drupal.project_root}}/{{drupal.project_domain}}/sites/default/lock/{{item}}.lock"
+      executable: /bin/bash
